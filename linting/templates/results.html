@@ -94,11 +94,21 @@
                         {% endfor %}
                     </div>
 
-                    <!-- Toggle Checked -->
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <span class="text-xs font-medium text-slate-400">Mark as reviewed</span>
-                        <input type="checkbox" class="checked-toggle w-5 h-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all" onchange="toggleCheck(this)">
-                    </label>
+                    <div class="flex items-center space-x-4">
+                        <!-- Copy Button -->
+                        <button onclick="copyBib('{{ p.id }}')" class="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            <span>Copy BibTeX</span>
+                        </button>
+
+                        <!-- Toggle Checked -->
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <span class="text-xs font-medium text-slate-400">Mark as reviewed</span>
+                            <input type="checkbox" class="checked-toggle w-5 h-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all" onchange="toggleCheck(this)">
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -133,6 +143,17 @@
             'px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400';
         
         update();
+    }
+
+    async function copyBib(id) {
+        const text = document.getElementById('bib-' + id).innerText;
+        await navigator.clipboard.writeText(text);
+        
+        // Brief visual feedback
+        const btn = event.currentTarget;
+        const original = btn.innerHTML;
+        btn.innerHTML = '<span>Copied!</span>';
+        setTimeout(() => btn.innerHTML = original, 2000);
     }
 
     function toggleBib(id) {

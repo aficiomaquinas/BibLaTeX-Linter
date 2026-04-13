@@ -17,7 +17,7 @@
         <form action="{% url 'validate' %}" method="post" class="space-y-6">
             {% csrf_token %}
             
-            <div class="space-y-2">
+            <div class="space-y-4">
                 <div class="flex items-center justify-between">
                     <label for="file" class="text-sm font-semibold uppercase tracking-wider text-slate-400">Bibliography Source (.bib)</label>
                     <span class="text-xs text-indigo-500 font-medium">Auto-parsing enabled</span>
@@ -34,6 +34,46 @@
                     ></textarea>
                 </div>
             </div>
+
+            <!-- Settings Accordion -->
+            <div x-data="{ open: false }" class="border dark:border-slate-800 rounded-2xl overflow-hidden">
+                <button type="button" @click="open = !open" class="w-full flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm font-semibold text-slate-500">
+                    <div class="flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        <span>Validation Settings</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                
+                <div x-show="open" x-collapse class="p-6 bg-white dark:bg-slate-950 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-start space-x-3 cursor-pointer group">
+                        <input type="checkbox" name="ignore_legacy" class="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <div class="space-y-1">
+                            <span class="text-sm font-medium">Ignore Legacy Fields</span>
+                            <p class="text-[11px] text-slate-400">Skip warnings for 'journal' vs 'journaltitle', 'year' vs 'date', etc.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer group">
+                        <input type="checkbox" name="ignore_commas" class="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <div class="space-y-1">
+                            <span class="text-sm font-medium">Ignore Missing Commas</span>
+                            <p class="text-[11px] text-slate-400">Don't warn about missing commas at the end of field lines.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer group">
+                        <input type="checkbox" name="ignore_names" class="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <div class="space-y-1">
+                            <span class="text-sm font-medium">Ignore Name Formatting</span>
+                            <p class="text-[11px] text-slate-400">Ignore abbreviations (.) and missing commas in Author names.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
 
             <div class="flex items-center justify-center">
                 <button type="submit" class="btn-primary flex items-center space-x-2 group">
