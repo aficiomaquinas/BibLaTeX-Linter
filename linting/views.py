@@ -9,7 +9,7 @@ import re
 # Library configuration for quick search links
 LIBRARIES = [
     ("Scholar", "http://scholar.google.de/scholar?hl=en&q="),
-    ("Semantic", "https://www.semanticscholar.org/search?q="),
+    ("S2", "https://www.semanticscholar.org/search?q="),
     ("Google", "https://www.google.com/search?q="),
     ("DBLP", "http://dblp.org/search/index.php#query="),
     ("IEEE", "http://ieeexplore.ieee.org/search/searchresult.jsp?queryText="),
