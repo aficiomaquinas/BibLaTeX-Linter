@@ -1,246 +1,201 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<style>
-  #title {
-    width: 720px;
-    border-bottom: 1px solid black;
-  }
-  #title h1 {
-    margin: 10px 0px;
-  }
-  #title h1 a {
-    color: black;
-    text-decoration: none;
-  }
-  #control {
-    clear: both;
-  }
-  #search {
-    float: left;
-  }
-  #search input {
-    width: 300px;
-    font-size: 14pt;
-  }
-  #mode {
-    text-align: right;
-  }
-  #mode label:first-child {
-    font-weight: bold;
-  }
-  #mode input {
-    margin-left: 20px;
-  }
-  .info {
-    margin-top: 10px;
-    padding: 10px;
-    background: #fafadd;
-    width: 250px;
-    float: right;
-    box-shadow: 1px 1px 1px 1px #ccc;
-    clear: both;
-  }
-  .info h2 {
-    font-size: 12pt;
-    padding: 0px;
-    margin: 0px;
-  }
-  .problem {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-    background: #ffbbaa;
-    counter-increment: problem;
-    width: 700px;
-    border: 1px solid #993333;
-    border-left: 5px solid #993333;
-    box-shadow: 1px 1px 1px 1px #ccc;
-    float: left;
-  }
-  .active {
-    box-shadow: 5px 5px 3px 3px #ccc;
-    position: relative;
-    top: -2px;
-  }
-  .severe0 {
-    background: #fafafa;
-    border: 1px solid black;
-    border-left: 5px solid black;
-  }
-  .severe1 {
-    background: #ffeedd;
-  }
-  .severe2 {
-    background: #ffddcc;
-  }
-  .severe3 {
-    background: #ffccbb;
-  }
-  .problem_checked {
-    border: 1px solid #339933;
-    border-left: 5px solid #339933;
-  }
-  .problem h2:before {
-    content: counter(problem) '. ';
-    color: gray;
-  }
-  .problem h2 {
-    font-size: 12pt;
-    padding: 0px;
-    margin: 0px;
-  }
-  .problem .links {
-    float: right;
-    position: relative;
-    top: -22px;
-  }
-  .problem .links a {
-    color: #3333cc;
-  }
-  .problem .links a:visited {
-    color: #666666;
-  }
-  .problem .reference {
-    clear: both;
-    font-size: 9pt;
-    margin-left: 20px;
-    font-style: italic;
-    font-weight: bold;
-  }
-  .problem ul {
-    clear: both;
-  }
-  .problem .problem_control {
-    float: right;
-    margin: 0px;
-    padding: 0px;
-  }
-  .problem .bibtex_toggle {
-    text-decoration: underline;
-    font-size: 9pt;
-    cursor: pointer;
-    padding-top: 5px;
-  }
-  .problem .bibtex {
-    margin-top: 5px;
-    font-family: Monospace;
-    font-size: 8pt;
-    display: none;
-    border: 1px solid black;
-    background-color: #ffffff;
-    padding: 5px;
-  }
-</style>
-{% comment %} jQuery is already included in base.html {% endcomment %}
-<script>
-  function isInProblemMode() {
-    return $('#mode_problems:checked').val() == 'problems'
-  }
-  function update() {
-    var searchText = $('#search input').val();
-    $('.problem').hide();
+<div class="space-y-8" x-data="{ filter: 'all', search: '' }">
     
-    // Fix: Unrecognized expression error by checking if searchText exists
-    if (searchText) {
-      $('.problem[id*="' + searchText + '"]').show();
-    } else {
-      $('.problem').show();
-    }
-
-    $('.problem .checked').each(function () {
-      if ($(this).prop('checked')) {
-        $(this).parents('.problem').addClass('problem_checked');
-      } else {
-        $(this).parents('.problem').removeClass('problem_checked');
-      }
-    });
-
-    if (isInProblemMode()) {
-      $('.severe0').hide();
-      $('.problem_checked').hide();
-    }
-  }
-  $(document).ready(function () {
-    $('.bibtex_toggle').click(function (event) {
-      event.preventDefault()
-      $(this).next().slideToggle()
-    })
-    $('#search input').on('input', function () {
-      update()
-    })
-    $('#mode input').change(function () {
-      update()
-    })
-    $('#uncheck_button').click(function () {
-      $('.problem .checked').prop('checked', false)
-      localStorage.clear()
-      update()
-    })
-    $('.problem a').mousedown(function (event) {
-      $('.problem').removeClass('active')
-      $(this).parents('.problem').addClass('active')
-    })
-    $('.problem .checked').change(function (event) {
-      var problem = $(this).parents('.problem')
-      problem.toggleClass('problem_checked')
-      var checked = problem.hasClass('problem_checked')
-      localStorage.setItem(problem.attr('id'), checked)
-      if (checked && isInProblemMode()) {
-        problem.slideUp()
-      }
-    })
-    $('.problem .checked').each(function () {
-      $(this).prop(
-        'checked',
-        localStorage.getItem($(this).parents('.problem').attr('id')) == 'true',
-      )
-    })
-    update()
-  })
-</script>
-<div class="container">
-  <div id="title">
-    <h1>Lint Results</h1>
-    <div id="control">
-      <form id="search">
-        <input placeholder="search entry ID ..." />
-      </form>
-      <form id="mode">
-        <label>show entries:</label>
-        <input
-          type="radio"
-          name="mode"
-          id="mode_problems"
-          value="problems"
-          checked="checked"
-        />
-        <label for="mode_problems">problems</label>
-        <input type="radio" name="mode" id="mode_all" value="all" />
-        <label for="mode_all">all</label>
-        <input type="button" value="uncheck all" id="uncheck_button" />
-      </form>
-      <br style="clear: both;" />
+    <!-- Dashboard Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="space-y-1">
+            <h1 class="text-4xl font-bold tracking-tight">Lint Results</h1>
+            <p class="text-slate-500">Found <span class="text-indigo-600 font-semibold">{{ problemCount }}</span> issues across <span class="text-indigo-600 font-semibold">{{ entriesCount }}</span> entries.</p>
+        </div>
+        
+        <!-- Controls -->
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="search-input"
+                    placeholder="Search entry ID..." 
+                    class="pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all w-64"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            
+            <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                <button onclick="setFilter('all')" id="filter-all" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400">All</button>
+                <button onclick="setFilter('problems')" id="filter-problems" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400">Problems Only</button>
+            </div>
+            
+            <button onclick="uncheckAll()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-rose-500 transition-colors">
+                Uncheck All
+            </button>
+        </div>
     </div>
-  </div>
-  <div class="info">
-    <h2>Info</h2>
-    <ul>
-      <li># entries: {{ entriesCount }}</li>
-      <li># problems: {{ problemCount }}</li>
-      <ul>
-        <li># missing fields: {{ counterMissingFields }}</li>
-        <li># flawed names: {{ counterFlawedNames }}</li>
-        <li># wrong types: {{ counterWrongTypes }}</li>
-        <li># non-unique id: {{ counterNonUniqueId }}</li>
-        <li># wrong field: {{ counterWrongFieldNames }}</li>
-      </ul>
-    </ul>
-  </div>  
-  {% for problem in problems %}
-    {{ problem|safe }}
-  {% endfor %}
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {% for label, val in counters.items %}
+        <div class="glass p-4 rounded-2xl border-l-4 
+            {% if val > 0 %}border-rose-500{% else %}border-emerald-500{% endif %}">
+            <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">{{ label|replace:"_, " }}</p>
+            <p class="text-2xl font-bold">{{ val }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Results List -->
+    <div class="space-y-6" id="results-list">
+        {% for p in problems %}
+        <div class="problem-card group border dark:border-slate-800 rounded-2xl p-6 transition-all hover:shadow-xl hover:shadow-indigo-500/5 
+            {% if p.subproblems %}bg-white dark:bg-slate-900/50{% else %}bg-slate-50/50 dark:bg-slate-950/20 opacity-80{% endif %}"
+             data-id="{{ p.id }}" 
+             data-has-problems="{% if p.subproblems %}true{% else %}false{% endif %}">
+            
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-tighter text-slate-500">{{ p.type }}</span>
+                        <h2 class="text-xl font-bold">{{ p.id }}</h2>
+                        {% if not p.subproblems %}
+                        <span class="text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Clean</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400 italic">
+                        {{ p.title|default:"No title detected" }}
+                    </p>
+
+                    {% if p.subproblems %}
+                    <ul class="space-y-2 mt-4">
+                        {% for sub in p.subproblems %}
+                        <li class="flex items-center space-x-2 text-sm text-rose-600 dark:text-rose-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>{{ sub }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-col items-end gap-4">
+                    <!-- Links -->
+                    <div class="flex items-center gap-2">
+                        {% for link in p.links %}
+                        <a href="{{ link.url }}" target="_blank" class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-all text-xs font-semibold">
+                            {{ link.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Toggle Checked -->
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <span class="text-xs font-medium text-slate-400">Mark as reviewed</span>
+                        <input type="checkbox" class="checked-toggle w-5 h-5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all" onchange="toggleCheck(this)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- BibLaTeX Toggle -->
+            <div class="mt-6 pt-6 border-t dark:border-slate-800">
+                <button onclick="toggleBib('{{ p.id }}')" class="flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg id="arrow-{{ p.id }}" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span>VIEW RAW BIBLATEX</span>
+                </button>
+                <div id="bib-{{ p.id }}" class="hidden mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950 font-mono text-[11px] leading-relaxed border dark:border-slate-800 overflow-x-auto">
+                    {{ p.raw_display|safe }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
+<script>
+    let currentFilter = 'all';
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.getElementById('filter-all').className = filter === 'all' ? 
+            'px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400' :
+            'px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400';
+        
+        document.getElementById('filter-problems').className = filter === 'problems' ? 
+            'px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400' :
+            'px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400';
+        
+        update();
+    }
+
+    function toggleBib(id) {
+        const el = document.getElementById('bib-' + id);
+        const arrow = document.getElementById('arrow-' + id);
+        el.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-90');
+    }
+
+    function toggleCheck(cb) {
+        const card = cb.closest('.problem-card');
+        const id = card.dataset.id;
+        const checked = cb.checked;
+        
+        if (checked) {
+            card.classList.add('opacity-40', 'grayscale');
+        } else {
+            card.classList.remove('opacity-40', 'grayscale');
+        }
+        
+        localStorage.setItem('lint-check-' + id, checked);
+        if (currentFilter === 'problems' && checked) {
+            update();
+        }
+    }
+
+    function uncheckAll() {
+        document.querySelectorAll('.checked-toggle').forEach(cb => {
+            cb.checked = false;
+            toggleCheck(cb);
+        });
+        localStorage.clear();
+        update();
+    }
+
+    function update() {
+        const search = document.getElementById('search-input').value.toLowerCase();
+        document.querySelectorAll('.problem-card').forEach(card => {
+            const id = card.dataset.id.toLowerCase();
+            const hasProblems = card.dataset.hasProblems === 'true';
+            const isChecked = localStorage.getItem('lint-check-' + card.dataset.id) === 'true';
+            
+            let visible = id.includes(search);
+            
+            if (currentFilter === 'problems') {
+                if (!hasProblems || isChecked) visible = false;
+            }
+            
+            card.style.display = visible ? 'block' : 'none';
+        });
+    }
+
+    document.getElementById('search-input').addEventListener('input', update);
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.problem-card').forEach(card => {
+            const isChecked = localStorage.getItem('lint-check-' + card.dataset.id) === 'true';
+            if (isChecked) {
+                const cb = card.querySelector('.checked-toggle');
+                cb.checked = true;
+                card.classList.add('opacity-40', 'grayscale');
+            }
+        });
+        update();
+    });
+</script>
 {% endblock %}
