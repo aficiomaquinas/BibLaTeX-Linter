@@ -1,4 +1,8 @@
 from django.shortcuts import render
+import bibtexparser
+from bibtexparser.bparser import BibTexParser
+from bibtexparser.customization import convert_to_unicode
+from pylatexenc.latex2text import LatexNodes2Text
 import string
 import re
 
@@ -11,7 +15,6 @@ LIBRARIES = [
     ("ACM", "http://dl.acm.org/results.cfm?query="),
 ]
 
-# Required fields definition
 REQUIRED_FIELDS = {
     "article": ["author", "title", "journaltitle/journal", "year/date"],
     "book": ["author", "title", "year/date"],
@@ -62,19 +65,15 @@ def validate(request):
     if not file_content:
         return render(request, "index.html", {"error": "No content provided"})
 
+    # Setup parser with unicode conversion
+    parser = BibTexParser()
+    parser.customization = convert_to_unicode
+    try:
+        bib_database = bibtexparser.loads(file_content, parser=parser)
+    except Exception as e:
+        return render(request, "index.html", {"error": f"Failed to parse BibTeX: {str(e)}"})
+
     problems = []
-    ids_seen = set()
-    
-    # Current entry state
-    current_entry = {
-        "id": "",
-        "type": "",
-        "title": "",
-        "raw": [],
-        "fields": set(),
-        "subproblems": [],
-    }
-    
     counters = {
         "Missing Fields": 0,
         "Flawed Names": 0,
@@ -83,91 +82,89 @@ def validate(request):
         "Wrong Fields": 0,
         "Missing Commas": 0
     }
-
-    remove_punctuation = str.maketrans("", "", string.punctuation)
-    last_line_num = -1
-
-    lines = file_content.splitlines()
-    for i, line in enumerate(lines):
-        line_stripped = line.strip()
+    
+    ids_seen = set()
+    l2t = LatexNodes2Text()
+    
+    for entry in bib_database.entries:
+        entry_id = entry.get("ID", "unknown")
+        entry_type = entry.get("ENTRYTYPE", "unknown").lower()
         
-        # New Entry Start
-        if line_stripped.startswith("@"):
-            if current_entry["id"]:
-                finalize_entry(current_entry, problems, counters, ids_seen)
-            
+        # Structure for template
+        current_entry = {
+            "id": entry_id,
+            "type": entry_type,
+            "title": "",
+            "raw": [], # bibtexparser doesn't give raw easily, we'll reconstruct or skip
+            "fields": set(entry.keys()),
+            "subproblems": [],
+        }
+        
+        # 1. Title handling with pylatexenc
+        raw_title = entry.get("title", "")
+        if raw_title:
             try:
-                cid = line_stripped.split("{")[1].rstrip(", ")
-            except IndexError:
-                cid = "unknown"
-                
-            current_entry = {
-                "id": cid,
-                "type": line_stripped.split("{")[0].strip("@ "),
-                "title": "",
-                "raw": [line],
-                "fields": set(),
-                "subproblems": [],
-            }
-            
-            if line_stripped[-1] != ",":
-                current_entry["subproblems"].append(f"Missing comma at '@{cid}' definition")
-                counters["Missing Commas"] += 1
+                current_entry["title"] = l2t.latex_to_text(raw_title)
+            except:
+                current_entry["title"] = re.sub(r"\}|\{", "", raw_title)
+        
+        # 2. Duplicate ID Check
+        if entry_id in ids_seen:
+            current_entry["subproblems"].append(f"Non-unique ID: '{entry_id}'")
+            counters["Duplicate IDs"] += 1
+        else:
+            ids_seen.add(entry_id)
 
-        # Entry Closing
-        elif line_stripped.startswith("}"):
-            current_entry["raw"].append(line)
-            finalize_entry(current_entry, problems, counters, ids_seen)
-            current_entry = {"id": "", "type": "", "title": "", "raw": [], "fields": set(), "subproblems": []}
+        # 3. Required Fields
+        req = resolve_required_fields(entry_type)
+        for r_field in req:
+            options = r_field.split("/")
+            if current_entry["fields"].isdisjoint(options):
+                current_entry["subproblems"].append(f"Missing field: '{r_field}'")
+                counters["Missing Fields"] += 1
 
-        # Entry Fields
-        elif "=" in line_stripped:
-            current_entry["raw"].append(line)
-            field_name = line_stripped.split("=")[0].strip().lower()
-            val_part = line_stripped.split("=", 1)[1].strip()
-            field_value = val_part.strip(", {}")
-            current_entry["fields"].add(field_name)
+        # 4. Detailed Field-level checks
+        for field, value in entry.items():
+            if field in ["ENTRYTYPE", "ID"]: continue
             
-            if field_name == "title":
-                current_entry["title"] = re.sub(r"\}|\{", "", field_value)
-            
-            # 1. Flawed Names (Abbreviations)
-            if field_name in ["author", "editor", "journal", "journaltitle", "booktitle"]:
-                if "." in field_value:
-                    current_entry["subproblems"].append(f"Flawed name/title in '{field_name}': contains abbreviation ('.')")
+            # Flawed Names (Abbreviations)
+            if field in ["author", "editor", "journal", "journaltitle", "booktitle"]:
+                if "." in value:
+                    current_entry["subproblems"].append(f"Flawed name/title in '{field}': contains abbreviation ('.')")
                     counters["Flawed Names"] += 1
             
-            # 2. Missing comma in Author
-            if field_name == "author" and "," not in field_value and " and " not in field_value.lower():
+            # Missing comma in Author
+            if field == "author" and "," not in value and " and " not in value.lower():
                  current_entry["subproblems"].append("Author name might be missing a comma (use 'Last, First')")
                  counters["Flawed Names"] += 1
 
-            # 3. Legacy BibTeX fields vs BibLaTeX
-            if field_name in ["journal", "year", "address"]:
-                 suggestion = {"journal": "journaltitle", "year": "date", "address": "location"}[field_name]
-                 current_entry["subproblems"].append(f"Legacy BibTeX field '{field_name}' found. Consider using '{suggestion}'")
+            # Legacy BibTeX fields
+            if field in ["journal", "year", "address"]:
+                 suggestion = {"journal": "journaltitle", "year": "date", "address": "location"}[field]
+                 current_entry["subproblems"].append(f"Legacy BibTeX field '{field}' found. Consider using '{suggestion}'")
                  counters["Wrong Fields"] += 1
 
-            # 4. Wrong Types (Heuristics)
-            if current_entry["type"].lower() == "proceedings" and field_name == "pages":
+            # Wrong Types
+            if entry_type == "proceedings" and field == "pages":
                 current_entry["subproblems"].append("Maybe should be 'inproceedings' (has pages)")
                 counters["Wrong Types"] += 1
-            
-            if line_stripped[-1] != ",":
-                current_entry["subproblems"].append(f"Missing comma at end of '{field_name}' field")
-                counters["Missing Commas"] += 1
-        
-        elif line_stripped:
-            current_entry["raw"].append(line)
 
-    # Calculate final stats
+        # Reconstruct a pseudo-raw for display
+        current_entry["raw"] = [f"@{entry_type}{{{entry_id},"]
+        for f, v in entry.items():
+            if f not in ["ENTRYTYPE", "ID"]:
+                current_entry["raw"].append(f"  {f} = {{{v}}},")
+        current_entry["raw"].append("}")
+        current_entry["raw_display"] = "<br>".join(current_entry["raw"])
+        
+        # Links
+        remove_punctuation = str.maketrans("", "", string.punctuation)
+        cleaned_title = current_entry["title"].translate(remove_punctuation)
+        current_entry["links"] = [{"name": name, "url": f"{url}{cleaned_title}"} for name, url in LIBRARIES]
+
+        problems.append(current_entry)
+
     total_problems = sum(len(p["subproblems"]) for p in problems)
-    
-    # Pre-render logic for links
-    for p in problems:
-        cleaned_title = p["title"].translate(remove_punctuation)
-        p["links"] = [{"name": name, "url": f"{url}{cleaned_title}"} for name, url in LIBRARIES]
-        p["raw_display"] = "<br>".join(p["raw"])
 
     return render(request, "results.html", {
         "problems": problems,
@@ -175,24 +172,3 @@ def validate(request):
         "counters": counters,
         "entriesCount": len(problems),
     })
-
-def finalize_entry(entry, problems_list, counters, ids_seen):
-    if not entry["id"]:
-        return
-
-    # Unique ID check
-    if entry["id"] in ids_seen:
-        entry["subproblems"].append(f"Non-unique ID: '{entry['id']}'")
-        counters["Duplicate IDs"] += 1
-    else:
-        ids_seen.add(entry["id"])
-
-    # Required field check
-    req = resolve_required_fields(entry["type"])
-    for r_field in req:
-        options = r_field.split("/")
-        if entry["fields"].isdisjoint(options):
-            entry["subproblems"].append(f"Missing field: '{r_field}'")
-            counters["Missing Fields"] += 1
-            
-    problems_list.append(entry)
