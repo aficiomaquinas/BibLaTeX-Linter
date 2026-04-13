@@ -76,12 +76,12 @@ def validate(request):
     }
     
     counters = {
-        "missing": 0,
-        "flawed": 0,
-        "wrong_types": 0,
-        "non_unique": 0,
-        "wrong_fields": 0,
-        "missing_commas": 0
+        "Missing Fields": 0,
+        "Flawed Names": 0,
+        "Wrong Types": 0,
+        "Duplicate IDs": 0,
+        "Wrong Fields": 0,
+        "Missing Commas": 0
     }
 
     remove_punctuation = str.maketrans("", "", string.punctuation)
@@ -112,7 +112,7 @@ def validate(request):
             
             if line_stripped[-1] != ",":
                 current_entry["subproblems"].append(f"Missing comma at '@{cid}' definition")
-                counters["missing_commas"] += 1
+                counters["Missing Commas"] += 1
 
         # Entry Closing
         elif line_stripped.startswith("}"):
@@ -133,11 +133,11 @@ def validate(request):
             # Simple heuristic checks
             if current_entry["type"].lower() == "proceedings" and field_name == "pages":
                 current_entry["subproblems"].append("Maybe should be 'inproceedings' (has pages)")
-                counters["wrong_types"] += 1
+                counters["Wrong Types"] += 1
             
             if line_stripped[-1] != ",":
                 current_entry["subproblems"].append(f"Missing comma at end of '{field_name}' field")
-                counters["missing_commas"] += 1
+                counters["Missing Commas"] += 1
         
         elif line_stripped:
             current_entry["raw"].append(line)
@@ -165,7 +165,7 @@ def finalize_entry(entry, problems_list, counters, ids_seen):
     # Unique ID check
     if entry["id"] in ids_seen:
         entry["subproblems"].append(f"Non-unique ID: '{entry['id']}'")
-        counters["non_unique"] += 1
+        counters["Duplicate IDs"] += 1
     else:
         ids_seen.add(entry["id"])
 
@@ -175,6 +175,6 @@ def finalize_entry(entry, problems_list, counters, ids_seen):
         options = r_field.split("/")
         if entry["fields"].isdisjoint(options):
             entry["subproblems"].append(f"Missing field: '{r_field}'")
-            counters["missing"] += 1
+            counters["Missing Fields"] += 1
             
     problems_list.append(entry)

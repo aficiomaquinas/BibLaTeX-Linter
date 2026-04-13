@@ -39,8 +39,10 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         {% for label, val in counters.items %}
         <div class="glass p-4 rounded-2xl border-l-4 
-            {% if val > 0 %}border-rose-500{% else %}border-emerald-500{% endif %}">
-            <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">{{ label|replace:"_, " }}</p>
+            {% if val > 0 %}border-rose-500{% else %}border-emerald-500 opacity-60{% endif %}">
+            <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">
+                {{ label|title }}
+            </p>
             <p class="text-2xl font-bold">{{ val }}</p>
         </div>
         {% endfor %}
