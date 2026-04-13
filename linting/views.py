@@ -76,11 +76,11 @@ def validate(request):
     problems = []
     counters = {
         "Missing Fields": 0,
-        "Flawed Names": 0,
+        "Abbreviations": 0,
+        "Author Format": 0,
         "Wrong Types": 0,
         "Duplicate IDs": 0,
         "Wrong Fields": 0,
-        "Missing Commas": 0
     }
     
     ids_seen = set()
@@ -88,8 +88,8 @@ def validate(request):
     
     # Extraction of validation options
     ignore_legacy = request.POST.get("ignore_legacy") == "on"
-    ignore_commas = request.POST.get("ignore_commas") == "on"
-    ignore_names = request.POST.get("ignore_names") == "on"
+    ignore_abbreviations = request.POST.get("ignore_abbreviations") == "on"
+    ignore_author_format = request.POST.get("ignore_author_format") == "on"
 
     for entry in bib_database.entries:
         entry_id = entry.get("ID", "unknown")
@@ -132,26 +132,26 @@ def validate(request):
         for field, value in entry.items():
             if field in ["ENTRYTYPE", "ID"]: continue
             
-            # Flawed Names (Abbreviations)
-            if not ignore_names and field in ["author", "editor", "journal", "journaltitle", "booktitle"]:
+            # 4a. Abbreviations
+            if not ignore_abbreviations and field in ["author", "editor", "journal", "journaltitle", "booktitle"]:
                 if "." in value:
-                    current_entry["subproblems"].append(f"Flawed name/title in '{field}': contains abbreviation ('.')")
-                    counters["Flawed Names"] += 1
+                    current_entry["subproblems"].append(f"Abbreviation ('.') found in '{field}'")
+                    counters["Abbreviations"] += 1
             
-            # Missing comma in Author
-            if not ignore_names and field == "author" and "," not in value and " and " not in value.lower():
-                 current_entry["subproblems"].append("Author name might be missing a comma (use 'Last, First')")
-                 counters["Flawed Names"] += 1
+            # 4b. Missing comma in Author (Author Format)
+            if not ignore_author_format and field == "author" and "," not in value and " and " not in value.lower():
+                 current_entry["subproblems"].append("Author name might be missing a comma (expected 'Last, First')")
+                 counters["Author Format"] += 1
 
-            # Legacy BibTeX fields
+            # 4c. Legacy BibTeX fields
             if not ignore_legacy and field in ["journal", "year", "address"]:
                  suggestion = {"journal": "journaltitle", "year": "date", "address": "location"}[field]
                  current_entry["subproblems"].append(f"Legacy BibTeX field '{field}' found. Consider using '{suggestion}'")
                  counters["Wrong Fields"] += 1
 
-            # Wrong Types
+            # 4d. Wrong Entry Type heuristic
             if entry_type == "proceedings" and field == "pages":
-                current_entry["subproblems"].append("Maybe should be 'inproceedings' (has pages)")
+                current_entry["subproblems"].append("Maybe should be 'inproceedings' (found 'pages' in 'proceedings')")
                 counters["Wrong Types"] += 1
 
         # Reconstruct a pseudo-raw for display
