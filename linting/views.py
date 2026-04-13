@@ -8,7 +8,7 @@ import re
 
 # Library configuration for quick search links
 LIBRARIES = [
-    ("Scholar", "http://scholar.google.de/scholar?hl=en&q="),
+    ("GScholar", "http://scholar.google.com/scholar?hl=en&q="),
     ("S2", "https://www.semanticscholar.org/search?q="),
     ("Google", "https://www.google.com/search?q="),
     ("DBLP", "http://dblp.org/search/index.php#query="),
