@@ -133,24 +133,33 @@
     padding: 5px;
   }
 </style>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+{% comment %} jQuery is already included in base.html {% endcomment %}
 <script>
   function isInProblemMode() {
     return $('#mode_problems:checked').val() == 'problems'
   }
   function update() {
-    $('.problem').hide()
-    $('.problem[id*=' + $('#search input').val() + ']').show()
+    var searchText = $('#search input').val();
+    $('.problem').hide();
+    
+    // Fix: Unrecognized expression error by checking if searchText exists
+    if (searchText) {
+      $('.problem[id*="' + searchText + '"]').show();
+    } else {
+      $('.problem').show();
+    }
+
     $('.problem .checked').each(function () {
-      if ($(this).attr('checked')) {
-        $(this).parents('.problem').addClass('problem_checked')
+      if ($(this).prop('checked')) {
+        $(this).parents('.problem').addClass('problem_checked');
       } else {
-        $(this).parents('.problem').removeClass('problem_checked')
+        $(this).parents('.problem').removeClass('problem_checked');
       }
-    })
+    });
+
     if (isInProblemMode()) {
-      $('.severe0').hide()
-      $('.problem_checked').hide()
+      $('.severe0').hide();
+      $('.problem_checked').hide();
     }
   }
   $(document).ready(function () {
@@ -158,14 +167,14 @@
       event.preventDefault()
       $(this).next().slideToggle()
     })
-    $('#search input').live('input', function () {
+    $('#search input').on('input', function () {
       update()
     })
     $('#mode input').change(function () {
       update()
     })
     $('#uncheck_button').click(function () {
-      $('.problem .checked').attr('checked', false)
+      $('.problem .checked').prop('checked', false)
       localStorage.clear()
       update()
     })
@@ -183,7 +192,7 @@
       }
     })
     $('.problem .checked').each(function () {
-      $(this).attr(
+      $(this).prop(
         'checked',
         localStorage.getItem($(this).parents('.problem').attr('id')) == 'true',
       )

@@ -104,9 +104,12 @@ def validate(request):
     counterMissingCommas = 0
 
     removePunctuationMap = dict((ord(char), None) for char in string.punctuation)
+    lastLine = -1
+    file_content = request.POST.get("file", "")
+    if not file_content:
+        return render(request, "index.html", {"error": "No content provided"})
 
-    file = request.POST["file"]
-    for (lineNumber, line) in enumerate(file.splitlines()):
+    for (lineNumber, line) in enumerate(file_content.splitlines()):
         line = line.strip("\n")
 
         # Staring a new entry

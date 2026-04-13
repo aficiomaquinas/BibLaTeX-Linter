@@ -14,7 +14,7 @@
 </div>
 <div class="container">
   <h2>Validate Now</h2>
-  <form action="/validate" method="post">
+  <form action="{% url 'validate' %}" method="post">
     {% csrf_token %}
     <div class="form-group">
       <label></label>

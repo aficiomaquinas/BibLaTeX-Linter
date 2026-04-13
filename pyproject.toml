@@ -1,0 +1,21 @@
+[project]
+name = "biblatex-linter"
+version = "0.1.0"
+description = "A simple web app to lint BibLaTeX files"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.1",
+    "gunicorn>=23.0.0",
+    "whitenoise>=6.7.0",
+    "python-dotenv>=1.0.1",
+    "dj-database-url>=2.3.0",
+]
+
+[tool.setuptools]
+packages = ["core", "linting"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+]

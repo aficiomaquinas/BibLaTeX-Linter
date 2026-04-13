@@ -1,37 +1,45 @@
 # BibLaTeX Linter
 
-_A simple [web app](https://biblatex-linter.onrender.com/) to lint BibLaTeX files_
+_A simple web app to lint BibLaTeX files_
 
-[BibLaTeX Linter](https://biblatex-linter.onrender.com/) is a small Python powered web app, based on [BibLaTeX-Check](https://github.com/Pezmc/BibLaTeX-Check). Paste in a .bib file, and it goes through a list of references and checks if certain required fields are available, for instance, if each publication is assigned a year or if a journal article has a volume and issue number.
+**BibLaTeX Linter** is a small Python-powered web app. Paste in a `.bib` file, and it checks if certain required fields are available (e.g., if a publication has a year, or if a journal article has volume/issue numbers).
 
-Please note that it is **not a BibLaTeX validator**. And in the current version, it might not yet be able to parse every valid bib file.
-
-## Using the website
-
-Head to [https://biblatex-linter.onrender.com/](https://biblatex-linter.onrender.com/) paste the contents of your .bib file and click validate!
+## Features
+- Validates field requirements for various BibLaTeX entry types.
+- Modernized with **Django 5.1+** and **Python 3.13**.
+- Managed with **uv** for fast and reliable dependency resolution.
+- Ready for **Docker** deployment.
 
 ## Running Locally
 
-Make sure you have Python [installed properly](http://install.python-guide.org).
+### 1. Using `uv` (Recommended)
+Make sure you have [uv](https://docs.astral.sh/uv/) installed.
 
 ```sh
-$ pipenv install
+# Sync dependencies and create environment
+uv sync
 
-pipenv run python3 manage.py runserver
+# Setup environment variables
+cp .env.example .env
+
+# Run development server
+uv run python manage.py runserver
 ```
 
-Your app should now be running on [localhost:8000](http://localhost:8000/).
+The app will be available at [http://localhost:8000/](http://localhost:8000/).
 
-## Alternatives
+### 2. Using Docker
+If you prefer Docker, you can start the app without installing Python locally:
 
-BibLaTeX Linter is adapted from [BibLaTeX-Check](https://github.com/Pezmc/BibLaTeX-Check), which, in turn, was adapted from [BibTex Check](https://code.google.com/p/bibtex-check/) by Fabian Beck, which can be used to validate BibTex files.
+```sh
+docker compose up
+```
 
-See [BibTex vs BibLaTeX vs NatBib](http://tex.stackexchange.com/questions/25701/bibtex-vs-biber-and-BibLaTeX-vs-natbib) for a comparison of different referencing packages.
-
-## Screenshot
-
-![Screenshots of the BibLaTeX check screen](https://github.com/Pezmc/BibLaTeX-Check/blob/screenshots/screenshots/checkscreen.png?raw=true 'BibLaTeX Check')
+## Configuration
+The app uses environment variables for configuration. See `.env.example` for details:
+- `DEBUG`: Set to `True` for development.
+- `DJANGO_SECRET_KEY`: Your secret key.
+- `ALLOWED_HOSTS`: Comma-separated list of allowed domains.
 
 ## License
-
-MIT license
+MIT License

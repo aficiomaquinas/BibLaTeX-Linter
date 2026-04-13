@@ -1,0 +1,18 @@
+services:
+  web:
+    image: python:3.13-slim
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=dev-secret-key-12345
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "pip install --no-cache-dir uv &&
+             uv pip install --system -e . &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"

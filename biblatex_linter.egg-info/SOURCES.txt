@@ -1,0 +1,16 @@
+LICENSE.md
+README.md
+pyproject.toml
+biblatex_linter.egg-info/PKG-INFO
+biblatex_linter.egg-info/SOURCES.txt
+biblatex_linter.egg-info/dependency_links.txt
+biblatex_linter.egg-info/requires.txt
+biblatex_linter.egg-info/top_level.txt
+core/__init__.py
+core/settings.py
+core/urls.py
+core/wsgi.py
+linting/__init__.py
+linting/models.py
+linting/tests.py
+linting/views.py
