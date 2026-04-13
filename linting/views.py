@@ -124,13 +124,31 @@ def validate(request):
         elif "=" in line_stripped:
             current_entry["raw"].append(line)
             field_name = line_stripped.split("=")[0].strip().lower()
-            field_value = line_stripped.split("=")[1].strip(", {}")
+            val_part = line_stripped.split("=", 1)[1].strip()
+            field_value = val_part.strip(", {}")
             current_entry["fields"].add(field_name)
             
             if field_name == "title":
                 current_entry["title"] = re.sub(r"\}|\{", "", field_value)
             
-            # Simple heuristic checks
+            # 1. Flawed Names (Abbreviations)
+            if field_name in ["author", "editor", "journal", "journaltitle", "booktitle"]:
+                if "." in field_value:
+                    current_entry["subproblems"].append(f"Flawed name/title in '{field_name}': contains abbreviation ('.')")
+                    counters["Flawed Names"] += 1
+            
+            # 2. Missing comma in Author
+            if field_name == "author" and "," not in field_value and " and " not in field_value.lower():
+                 current_entry["subproblems"].append("Author name might be missing a comma (use 'Last, First')")
+                 counters["Flawed Names"] += 1
+
+            # 3. Legacy BibTeX fields vs BibLaTeX
+            if field_name in ["journal", "year", "address"]:
+                 suggestion = {"journal": "journaltitle", "year": "date", "address": "location"}[field_name]
+                 current_entry["subproblems"].append(f"Legacy BibTeX field '{field_name}' found. Consider using '{suggestion}'")
+                 counters["Wrong Fields"] += 1
+
+            # 4. Wrong Types (Heuristics)
             if current_entry["type"].lower() == "proceedings" and field_name == "pages":
                 current_entry["subproblems"].append("Maybe should be 'inproceedings' (has pages)")
                 counters["Wrong Types"] += 1
