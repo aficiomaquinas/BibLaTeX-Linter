@@ -9,6 +9,7 @@ import re
 # Library configuration for quick search links
 LIBRARIES = [
     ("Scholar", "http://scholar.google.de/scholar?hl=en&q="),
+    ("Semantic", "https://www.semanticscholar.org/search?q="),
     ("Google", "https://www.google.com/search?q="),
     ("DBLP", "http://dblp.org/search/index.php#query="),
     ("IEEE", "http://ieeexplore.ieee.org/search/searchresult.jsp?queryText="),
@@ -164,8 +165,14 @@ def validate(request):
         
         # Links
         remove_punctuation = str.maketrans("", "", string.punctuation)
-        cleaned_title = current_entry["title"].translate(remove_punctuation)
-        current_entry["links"] = [{"name": name, "url": f"{url}{cleaned_title}"} for name, url in LIBRARIES]
+        base_query = current_entry["title"]
+        author = entry.get("author", "")
+        if author:
+            # Take first author or clean up
+            base_query += f" {author.split(' and ')[0]}"
+        
+        cleaned_query = base_query.translate(remove_punctuation)
+        current_entry["links"] = [{"name": name, "url": f"{url}{cleaned_query}"} for name, url in LIBRARIES]
 
         problems.append(current_entry)
 
