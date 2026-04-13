@@ -1,45 +1,55 @@
-# BibLaTeX Linter
+# BibLaTeX Linter (Modernized Fork)
 
-_A simple web app to lint BibLaTeX files_
+_A streamlined, containerized web application to lint and validate BibLaTeX files._
 
-**BibLaTeX Linter** is a small Python-powered web app. Paste in a `.bib` file, and it checks if certain required fields are available (e.g., if a publication has a year, or if a journal article has volume/issue numbers).
+This project is a modernized fork of [Pezmc/BibLaTeX-Check](https://github.com/Pezmc/BibLaTeX-Check). It has been refactored to run seamlessly in modern environments using **Docker Compose** and **uv**.
 
-## Features
-- Validates field requirements for various BibLaTeX entry types.
-- Modernized with **Django 5.1+** and **Python 3.13**.
-- Managed with **uv** for fast and reliable dependency resolution.
-- Ready for **Docker** deployment.
+## Origins & Credits
+BibLaTeX Linter is part of a lineage of academic tools:
+1. Adapted from **[BibLaTeX-Check](https://github.com/Pezmc/BibLaTeX-Check)** by Pezmc.
+2. Which was adapted from **[BibTex Check](https://code.google.com/p/bibtex-check/)** by **Fabian Beck**.
 
-## Running Locally
+This version focuses on local developer experience and zero-configuration deployment.
 
-### 1. Using `uv` (Recommended)
-Make sure you have [uv](https://docs.astral.sh/uv/) installed.
+---
+
+## Quick Start (Docker Compose)
+
+The fastest way to get the linter running is using Docker. No Python installation is required on your host machine.
 
 ```sh
-# Sync dependencies and create environment
-uv sync
+# 1. Clone and enter the directory
+git clone https://github.com/your-repo/BibLaTeX-Linter.git
+cd BibLaTeX-Linter
 
-# Setup environment variables
-cp .env.example .env
+# 2. Start the application
+docker compose up
+```
+
+The app will be live at **[http://localhost:8000/](http://localhost:8000/)**.
+
+---
+
+## Alternative: Local Development with `uv`
+
+If you prefer to run it natively for development:
+
+```sh
+# Install dependencies
+uv sync
 
 # Run development server
 uv run python manage.py runserver
 ```
 
-The app will be available at [http://localhost:8000/](http://localhost:8000/).
-
-### 2. Using Docker
-If you prefer Docker, you can start the app without installing Python locally:
-
-```sh
-docker compose up
-```
+## How it works
+Paste the contents of your `.bib` file into the validator. The tool checks for:
+- Missing required fields (year, journal, etc.) based on entry type.
+- Non-unique IDs.
+- Common formatting flaws (abbreviated journal titles, missing commas).
 
 ## Configuration
-The app uses environment variables for configuration. See `.env.example` for details:
-- `DEBUG`: Set to `True` for development.
-- `DJANGO_SECRET_KEY`: Your secret key.
-- `ALLOWED_HOSTS`: Comma-separated list of allowed domains.
+Basic configuration is handled via environment variables (see `.env.example`). For local Docker usage, the defaults are already configured in `docker-compose.yml`.
 
 ## License
 MIT License
